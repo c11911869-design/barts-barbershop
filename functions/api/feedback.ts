@@ -1,0 +1,168 @@
+/**
+ * Feedback intake for the client review site.
+ *
+ * Flow: Turnstile verification -> validation -> GitHub issue -> notification email.
+ *
+ * The issue is filed with the `client-feedback` label only. It deliberately does
+ * NOT get the `approved` label, because that label is what releases the build
+ * agent to act. Approval stays a manual decision by the maintainer so that a
+ * public form can never queue automated work on its own.
+ */
+
+interface Env {
+  TURNSTILE_SECRET_KEY: string;
+  FEEDBACK_GITHUB_TOKEN: string;
+  FEEDBACK_GITHUB_REPO: string; // "owner/name"
+  RESEND_API_KEY: string;
+  FEEDBACK_TO_EMAIL: string;
+  FEEDBACK_FROM_EMAIL: string;
+  FEEDBACK_PASSCODE?: string; // optional shared secret for the client
+}
+
+const MAX = { name: 100, email: 200, area: 120, message: 5000 } as const;
+
+const json = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+  });
+
+/** Prevents Markdown/HTML injection when untrusted text is embedded in an issue body. */
+function fence(text: string): string {
+  return text.replace(/```/g, "'''");
+}
+
+async function verifyTurnstile(token: string, secret: string, ip: string | null): Promise<boolean> {
+  const form = new FormData();
+  form.append('secret', secret);
+  form.append('response', token);
+  if (ip) form.append('remoteip', ip);
+
+  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) return false;
+  const data = (await res.json()) as { success?: boolean };
+  return data.success === true;
+}
+
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return json(400, { error: 'Expected form data.' });
+  }
+
+  const field = (key: string) => (form.get(key) ?? '').toString().trim();
+
+  // Bots that fill every field trip this hidden input. Real browsers leave it empty.
+  if (field('company')) return json(200, { ok: true });
+
+  if (env.FEEDBACK_PASSCODE && field('passcode') !== env.FEEDBACK_PASSCODE) {
+    return json(403, { error: 'That access code is not correct.' });
+  }
+
+  const token = field('cf-turnstile-response');
+  if (!token) return json(400, { error: 'Please complete the human verification check.' });
+
+  const ip = request.headers.get('CF-Connecting-IP');
+  if (!(await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, ip))) {
+    return json(403, { error: 'Human verification failed. Please reload and try again.' });
+  }
+
+  const name = field('name');
+  const email = field('email');
+  const area = field('area');
+  const message = field('message');
+
+  if (!name || !message) {
+    return json(400, { error: 'Name and feedback are both required.' });
+  }
+  if (
+    name.length > MAX.name ||
+    email.length > MAX.email ||
+    area.length > MAX.area ||
+    message.length > MAX.message
+  ) {
+    return json(400, { error: 'One of the fields is too long.' });
+  }
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return json(400, { error: 'That email address does not look valid.' });
+  }
+
+  const submitted = new Date().toISOString();
+  const title = `Feedback: ${area || 'general'} - ${message.slice(0, 60).replace(/\s+/g, ' ')}`;
+  const body = [
+    '### Feedback from the review site',
+    '',
+    `- **From:** ${fence(name)}${email ? ` (${fence(email)})` : ''}`,
+    `- **Page or section:** ${fence(area) || '_not specified_'}`,
+    `- **Submitted:** ${submitted}`,
+    '',
+    '### Message',
+    '',
+    '```text',
+    fence(message),
+    '```',
+    '',
+    '---',
+    '',
+    'Submitted through the website feedback form and verified by Turnstile.',
+    'Add the `approved` label to release the build agent to work on this.',
+  ].join('\n');
+
+  const issue = await fetch(`https://api.github.com/repos/${env.FEEDBACK_GITHUB_REPO}/issues`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.FEEDBACK_GITHUB_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'barts-barbershop-feedback',
+    },
+    body: JSON.stringify({ title, body, labels: ['client-feedback'] }),
+  });
+
+  if (!issue.ok) {
+    console.error('GitHub issue creation failed', issue.status, await issue.text());
+    return json(502, { error: 'Could not record the feedback. Please try again shortly.' });
+  }
+
+  const created = (await issue.json()) as { html_url: string; number: number };
+
+  // Email is a convenience notification. Losing it must not lose the feedback,
+  // which is already durably recorded as an issue above.
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: env.FEEDBACK_FROM_EMAIL,
+        to: [env.FEEDBACK_TO_EMAIL],
+        reply_to: email || undefined,
+        subject: `[Bart's] Feedback #${created.number}: ${area || 'general'}`,
+        text: [
+          `From: ${name}${email ? ` <${email}>` : ''}`,
+          `Page or section: ${area || 'not specified'}`,
+          '',
+          message,
+          '',
+          `Issue: ${created.html_url}`,
+        ].join('\n'),
+      }),
+    });
+  } catch (err) {
+    console.error('Notification email failed', err);
+  }
+
+  return json(200, { ok: true, issue: created.number });
+};
+
+// Pages returns 405 on its own for unhandled methods; this makes a stray GET
+// (someone opening /api/feedback in a browser) return something legible.
+export const onRequestGet: PagesFunction<Env> = async () =>
+  json(405, { error: 'This endpoint only accepts form submissions.' });

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Type check and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Type checks the Astro site and the Cloudflare Function, then builds.
+      - run: npm run check
+      - run: npm run build
+
+      # A _headers file that silently fails to ship is how a pre-launch site
+      # ends up indexed by Google, so assert it survived the build.
+      - name: Verify _headers reached the build output
+        run: |
+          test -f dist/_headers || { echo "::error::dist/_headers is missing"; exit 1; }
+          grep -q "X-Robots-Tag" dist/_headers || { echo "::error::noindex directive missing"; exit 1; }
+
+      - name: Verify every expected page built
+        run: |
+          for page in index services barbers gallery faq contact feedback; do
+            if [ "$page" = "index" ]; then
+              path="dist/index.html"
+            else
+              path="dist/$page/index.html"
+            fi
+            test -f "$path" || { echo "::error::missing $path"; exit 1; }
+          done
+          echo "All 7 pages built."

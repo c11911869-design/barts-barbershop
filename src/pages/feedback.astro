@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+
+// Cloudflare's documented "always passes" test key keeps the form usable in
+// local development and before the real Turnstile keys are issued.
+const TEST_SITE_KEY = '1x00000000000000000000AA';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? TEST_SITE_KEY;
+
+const areas = ['Home', 'Services', 'Barbers', 'Gallery', 'FAQ', 'Contact', 'Something else'];
+const field =
+  'mt-2 w-full rounded-md border border-razor bg-white px-4 py-3 text-base outline-none focus:border-brass focus:ring-2 focus:ring-brass/40';
+const labelText = 'text-sm font-bold uppercase tracking-[0.14em] text-clay';
+---
+
+<BaseLayout
+  title="Site Feedback"
+  description="Private feedback form for the Bart's Barber Shop website review."
+  path="/feedback/"
+  noindex
+>
+  <section class="bg-paper py-16">
+    <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+      <SectionHeading
+        eyebrow="Review"
+        title="Tell us what to change"
+        description="Anything at all: wrong hours, a photo to swap, wording that does not sound like the shop. One note per submission works best."
+      />
+
+      <form id="feedback-form" class="mt-10 grid gap-6" novalidate>
+        <div>
+          <label class={labelText} for="name">Your name</label>
+          <input class={field} id="name" name="name" type="text" maxlength="100" required autocomplete="name" />
+        </div>
+
+        <div>
+          <label class={labelText} for="email">Email <span class="normal-case tracking-normal text-ink/60">(optional, so we can follow up)</span></label>
+          <input class={field} id="email" name="email" type="email" maxlength="200" autocomplete="email" />
+        </div>
+
+        <div>
+          <label class={labelText} for="area">Which page?</label>
+          <select class={field} id="area" name="area">
+            <option value="">Select a page</option>
+            {areas.map((a) => <option value={a}>{a}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label class={labelText} for="message">Your feedback</label>
+          <textarea class={field} id="message" name="message" rows="7" maxlength="5000" required></textarea>
+        </div>
+
+        <!-- Honeypot: hidden from people, irresistible to bots. -->
+        <div class="hidden" aria-hidden="true">
+          <label for="company">Company</label>
+          <input id="company" name="company" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <div class="cf-turnstile" data-sitekey={siteKey} data-theme="light"></div>
+
+        <button
+          id="feedback-submit"
+          type="submit"
+          class="inline-flex min-h-11 items-center justify-center rounded-md border border-brass bg-brass px-5 py-3 text-sm font-bold uppercase tracking-[0.12em] text-paper transition hover:bg-brass-dark disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Send feedback
+        </button>
+
+        <p id="feedback-status" class="min-h-6 text-sm font-semibold" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+  <script is:inline>
+    const form = document.getElementById('feedback-form');
+    const status = document.getElementById('feedback-status');
+    const submit = document.getElementById('feedback-submit');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      if (!form.name.value.trim() || !form.message.value.trim()) {
+        status.textContent = 'Please add your name and some feedback.';
+        status.className = 'min-h-6 text-sm font-semibold text-red-700';
+        return;
+      }
+
+      submit.disabled = true;
+      status.textContent = 'Sending...';
+      status.className = 'min-h-6 text-sm font-semibold text-clay';
+
+      try {
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          body: new FormData(form),
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (response.ok) {
+          form.reset();
+          status.textContent = 'Thank you. Your feedback was sent.';
+          status.className = 'min-h-6 text-sm font-semibold text-green-700';
+        } else {
+          status.textContent = result.error || 'Something went wrong. Please try again.';
+          status.className = 'min-h-6 text-sm font-semibold text-red-700';
+        }
+      } catch {
+        status.textContent = 'Could not reach the server. Please check your connection.';
+        status.className = 'min-h-6 text-sm font-semibold text-red-700';
+      } finally {
+        submit.disabled = false;
+        if (window.turnstile) window.turnstile.reset();
+      }
+    });
+  </script>
+</BaseLayout>

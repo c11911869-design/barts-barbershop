@@ -10,9 +10,10 @@ interface Props {
   path?: string;
   image?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  noindex?: boolean;
 }
 
-const { title, description, path = '/', image = '/og-image.svg', jsonLd } = Astro.props;
+const { title, description, path = '/', image = '/og-image.svg', jsonLd, noindex = false } = Astro.props;
 const canonical = new URL(path, business.siteUrl).toString();
 const metaTitle = `${title} | ${business.name}`;
 ---
@@ -25,6 +26,7 @@ const metaTitle = `${title} | ${business.name}`;
     <title>{metaTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={business.name} />
     <meta property="og:title" content={metaTitle} />

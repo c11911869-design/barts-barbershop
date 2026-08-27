@@ -1,0 +1,83 @@
+name: Feedback agent
+
+# Runs only when a human adds the `approved` label to an issue. The feedback
+# form files issues WITHOUT that label on purpose, so submitting the form can
+# never start a paid agent run or open a pull request by itself.
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: feedback-agent-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    if: github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Mark the issue as in progress
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh issue edit ${{ github.event.issue.number }} --add-label agent-wip
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --max-turns 30
+            --model claude-sonnet-5
+            --allowedTools Read,Edit,Write,Glob,Grep,Bash
+          prompt: |
+            You are maintaining the static Astro website for Bart's Barber Shop.
+
+            A client submitted this feedback, which a maintainer has approved:
+
+            Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Implement the change. Rules:
+
+            - Content lives in `src/content/` (services, team, gallery, faqs) and
+              `src/data/business.ts` (name, address, phone, hours, links). Prefer
+              editing content and data over editing markup.
+            - Match the surrounding code style. Reuse existing components
+              (Button, SectionHeading, BaseLayout) rather than adding new ones.
+            - Do not change `public/_headers`, `astro.config.mjs`, or anything in
+              `.github/` unless the feedback is specifically about them.
+            - Run `npm run check` and `npm run build`. Both must pass before you
+              open a pull request.
+            - If the feedback is ambiguous, is a question rather than a change
+              request, or asks for something you cannot verify (a new price, a
+              new phone number, a photo you do not have), do NOT guess. Leave a
+              comment on the issue asking for the specific missing detail and
+              stop without opening a pull request.
+
+            Work on a branch named `feedback/issue-${{ github.event.issue.number }}`.
+            Open a pull request whose body explains what changed and why, and
+            includes the line "Closes #${{ github.event.issue.number }}".
+            Never push to `main` and never merge the pull request yourself.
+
+      - name: Clear the in-progress label
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh issue edit ${{ github.event.issue.number }} --remove-label agent-wip || true

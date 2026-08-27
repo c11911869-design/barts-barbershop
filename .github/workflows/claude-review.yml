@@ -1,0 +1,52 @@
+name: Agent review
+
+# Reviews pull requests opened by the feedback agent before a human merges them.
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+concurrency:
+  group: review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Only reviews the agent's own branches; hand-written PRs are reviewed by you.
+    if: startsWith(github.head_ref, 'feedback/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --max-turns 15
+            --model claude-sonnet-5
+            --allowedTools Read,Glob,Grep,Bash
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} on this
+            static Astro site for Bart's Barber Shop.
+
+            Focus on what actually breaks a small business website:
+
+            - Factual drift: a changed price, phone number, address, or set of
+              hours that does not match `src/data/business.ts`, or that the
+              originating issue did not actually ask for.
+            - Accessibility regressions: missing alt text, a heading level
+              skipped, contrast, form labels.
+            - SEO regressions: a changed or missing canonical URL, title,
+              meta description, or JSON-LD structured data.
+            - Scope creep: files touched that the issue did not call for,
+              especially `public/_headers`, `astro.config.mjs`, or `.github/`.
+
+            Post your findings as a single pull request comment. If the change
+            is clean, say so in one line. Do not approve the pull request and do
+            not merge it.
