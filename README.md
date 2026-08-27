@@ -40,16 +40,35 @@ npm run preview
 
 This serves the production build locally after `npm run build`.
 
+## Repository
+
+The canonical remote is:
+
+- `https://github.com/c11911869-design/barts-barbershop` (private)
+
+Node version is pinned to 22 in `.nvmrc` so local and CI builds match.
+
 ## Cloudflare Pages Deployment
 
-Use these Cloudflare Pages settings:
+Connect the repository to Cloudflare Pages with these settings:
 
 - Framework preset: Astro
 - Build command: `npm run build`
 - Output directory: `dist`
-- Node version: current LTS or newer
+- Production branch: `main`
+- Node version: read from `.nvmrc` (22)
 
 No server adapter is required because the project uses static output.
+Pull requests automatically receive their own preview deployment URL.
+
+### Response headers
+
+`public/_headers` is copied verbatim into `dist/` at build time and read by
+Cloudflare Pages. It currently sends `X-Robots-Tag: noindex, nofollow` so the
+pre-launch review deployment cannot compete with the live
+`bartsbarbershop.org` site in search results.
+
+Remove that one line at launch. Leave the remaining security headers in place.
 
 ## Content Editing
 
@@ -75,6 +94,9 @@ The active gallery uses original website photos from `src/assets/original-site/`
 
 ## TODO Before Launch
 
+- Remove the `X-Robots-Tag: noindex, nofollow` line from `public/_headers`.
+- Point `site` in `astro.config.mjs` at the final production domain.
+- Move DNS for the production domain (currently hosted at Interland).
 - Confirm current pricing and service availability.
 - Confirm holiday hours and any temporary schedule changes.
 - Confirm whether any non-cash payment options should be added in the future.
