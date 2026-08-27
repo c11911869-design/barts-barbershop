@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="680" viewBox="0 0 900 680">
+  <rect width="900" height="680" fill="#181512"/>
+  <rect x="95" y="96" width="710" height="488" rx="18" fill="#fffaf2"/>
+  <path d="M222 475 575 122" stroke="#b48645" stroke-width="30" stroke-linecap="round"/>
+  <path d="M320 150 662 492" stroke="#7f4634" stroke-width="26" stroke-linecap="round"/>
+  <circle cx="635" cy="172" r="46" fill="#d8d0c3"/>
+  <circle cx="690" cy="227" r="46" fill="#d8d0c3"/>
+  <text x="118" y="638" fill="#d8d0c3" font-family="Arial, sans-serif" font-size="22">TODO real photo</text>
+</svg>

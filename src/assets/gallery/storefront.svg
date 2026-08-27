@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="680" viewBox="0 0 900 680">
+  <rect width="900" height="680" fill="#26211d"/>
+  <rect x="102" y="170" width="696" height="360" fill="#fffaf2"/>
+  <rect x="102" y="120" width="696" height="80" fill="#181512"/>
+  <text x="220" y="175" fill="#b48645" font-family="Georgia, serif" font-size="42" font-weight="700">Bart's Barber Shop</text>
+  <rect x="190" y="260" width="210" height="270" fill="#d8d0c3"/>
+  <rect x="475" y="260" width="210" height="270" fill="#d8d0c3"/>
+  <text x="100" y="638" fill="#d8d0c3" font-family="Arial, sans-serif" font-size="22">TODO real storefront photo</text>
+</svg>

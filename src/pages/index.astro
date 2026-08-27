@@ -1,0 +1,238 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd.astro';
+import { business } from '../data/business';
+import storefrontImage from '../assets/original-site/36834145.jpg';
+
+const services = (await getCollection('services')).sort((a, b) => a.data.order - b.data.order);
+const featuredServices = services.filter((service) => service.data.featured);
+const serviceNames = services.map((service) => service.data.title);
+const poleStripeRows = Array.from({ length: 8 }, (_, index) => index);
+---
+
+<BaseLayout
+  title="Laurel Barber Shop for Walk-In Haircuts"
+  description="Bart's Barber Shop in Laurel, MD offers walk-in haircuts and grooming for men, women, and children at Laurel Shopping Center."
+>
+  <LocalBusinessJsonLd services={serviceNames} />
+  <section class="bg-ink text-paper">
+    <div class="mx-auto grid min-h-[78vh] max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-[0.2em] text-brass">Laurel, Maryland barber shop</p>
+        <div class="mt-4 flex items-center gap-4 sm:gap-5">
+          <div class="barber-pole barber-pole--headline shrink-0" aria-hidden="true">
+            <div class="barber-pole__orb"></div>
+            <div class="barber-pole__cap"></div>
+            <div class="barber-pole__glass">
+              <div class="barber-pole__stripes">
+                {poleStripeRows.map((index) => (
+                  <span class="barber-pole__stripe barber-pole__stripe--red" style={`--stripe-y: ${index * 4.8}rem`}></span>
+                ))}
+                {poleStripeRows.map((index) => (
+                  <span class="barber-pole__stripe barber-pole__stripe--blue" style={`--stripe-y: ${index * 4.8 + 2.4}rem`}></span>
+                ))}
+              </div>
+            </div>
+            <div class="barber-pole__cap"></div>
+          </div>
+          <h1 class="font-serif text-5xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl">Bart's Barber Shop</h1>
+        </div>
+        <p class="mt-6 max-w-2xl text-lg leading-8 text-razor">
+          Family-owned and operated with more than 60 years in the hair industry, Bart's serves Laurel with walk-in haircuts, shaves, fades, and full-service barbering for men, women, and children.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <Button href={business.phoneHref}>Call Now</Button>
+          <Button href={business.directionsUrl} variant="ghost">Get Directions</Button>
+          <Button href="/services/" variant="secondary">View Services</Button>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="barber-frame absolute -inset-3 rounded-md"></div>
+        <Image
+          src={storefrontImage}
+          alt="Bart's Barber Shop storefront at 356 Domer Ave in Laurel, Maryland"
+          class="relative aspect-[4/3] w-full rounded-md border-4 border-white object-cover shadow-2xl"
+          widths={[480, 720, 960]}
+          sizes="(min-width: 1024px) 45vw, 100vw"
+          loading="eager"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-paper py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <SectionHeading eyebrow="Services" title="Haircuts, fades, shaves, and more" description="Bart's is a full-service Laurel barber shop and hair house offering practical walk-in grooming for the whole family." />
+      <div class="mt-10 grid gap-4 md:grid-cols-3">
+        {featuredServices.map((service) => (
+          <article class="rounded-md border border-razor bg-white p-6">
+            <h2 class="font-serif text-2xl font-bold">{service.data.title}</h2>
+            <p class="mt-3 text-sm leading-7 text-coal">{service.data.description}</p>
+            <p class="mt-5 text-sm font-bold uppercase tracking-[0.14em] text-clay">{service.data.price} · {service.data.duration}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-cream py-16">
+    <div class="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+      <div>
+        <h2 class="font-serif text-3xl font-bold">Hours</h2>
+        <p class="mt-3 text-sm text-clay">Sunday closed. Call to confirm holiday hours.</p>
+      </div>
+      <dl class="md:col-span-2 grid max-w-xl gap-3">
+        {business.displayHours.map((hours) => (
+          <div class="flex justify-between gap-4 border-b border-razor py-3 text-sm">
+            <dt class="font-semibold">{hours.dayOfWeek}</dt>
+            <dd>{hours.hours}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <section class="bg-paper py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <SectionHeading eyebrow="Reputation" title="A long-running Laurel shop" description="Bart's is friendly, family-owned, walk-in focused, and backed by more than 60 years in the hair industry." />
+      <div class="mt-10 grid gap-4 md:grid-cols-3">
+        {['Established by Bart Sr. in 1956.', 'Eight barber chairs and a professional staff.', 'No appointments needed for walk-in service.'].map((quote) => (
+          <figure class="rounded-md border border-razor bg-white p-6">
+            <blockquote class="text-lg leading-8 text-coal">"{quote}"</blockquote>
+            <figcaption class="mt-5 text-sm font-bold text-clay">Shop history</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .barber-frame {
+    background:
+      repeating-linear-gradient(
+        135deg,
+        #e11d2e 0 18px,
+        #ffffff 18px 36px,
+        #1f5fa8 36px 54px,
+        #ffffff 54px 72px
+      );
+    background-size: 102px 102px;
+    opacity: 0.84;
+    animation: barber-frame-spin 1.2s linear infinite;
+  }
+
+  .barber-pole {
+    --pole-shaft-width: clamp(2.35rem, 7vw, 3.45rem);
+    --pole-stripe-slide: 4.8rem;
+    width: calc(var(--pole-shaft-width) * 1.2);
+    filter: drop-shadow(0 1.25rem 1.25rem rgb(7 29 73 / 0.35));
+  }
+
+  .barber-pole--headline {
+    margin-top: 0.15rem;
+  }
+
+  .barber-pole__orb {
+    width: calc(var(--pole-shaft-width) * 1.2);
+    height: calc(var(--pole-shaft-width) * 1.2);
+    margin: 0 auto -0.2rem;
+    border: 2px solid rgb(255 255 255 / 0.9);
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 34% 28%, #fff7bf 0 18%, #f7c948 19% 48%, #b77812 100%);
+    box-shadow:
+      0 0.2rem 0.6rem rgb(247 201 72 / 0.4),
+      inset -0.18rem -0.22rem 0.25rem rgb(91 57 4 / 0.25);
+  }
+
+  .barber-pole__cap {
+    width: var(--pole-shaft-width);
+    height: 0.65rem;
+    margin-inline: auto;
+    border: 2px solid rgb(255 255 255 / 0.92);
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, #ffffff 0%, #c8d7ea 55%, #ffffff 100%);
+    box-shadow: inset 0 0 0.35rem rgb(7 29 73 / 0.25);
+  }
+
+  .barber-pole__glass {
+    position: relative;
+    width: calc(var(--pole-shaft-width) - 0.76rem);
+    height: clamp(6.3rem, 16vw, 9rem);
+    margin-inline: auto;
+    overflow: hidden;
+    border-inline: 3px solid rgb(255 255 255 / 0.92);
+    background: #ffffff;
+    box-shadow:
+      inset 0.55rem 0 0.7rem rgb(255 255 255 / 0.55),
+      inset -0.6rem 0 0.8rem rgb(7 29 73 / 0.28);
+  }
+
+  .barber-pole__glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgb(255 255 255 / 0.52), transparent 28%, transparent 70%, rgb(7 29 73 / 0.18));
+    pointer-events: none;
+  }
+
+  .barber-pole__stripes {
+    position: absolute;
+    inset: -4.8rem -1.5rem;
+    animation: barber-pole-spin 1.2s linear infinite;
+    transform: translate3d(0, calc(var(--pole-stripe-slide) * -1), 0);
+    will-change: transform;
+  }
+
+  .barber-pole__stripe {
+    position: absolute;
+    top: var(--stripe-y);
+    left: -45%;
+    width: 190%;
+    height: 1.2rem;
+    transform: rotate(-20deg);
+    transform-origin: center;
+  }
+
+  .barber-pole__stripe--red {
+    background: #e11d2e;
+  }
+
+  .barber-pole__stripe--blue {
+    background: #1f5fa8;
+  }
+
+  @keyframes barber-pole-spin {
+    from {
+      transform: translate3d(0, calc(var(--pole-stripe-slide) * -1), 0);
+    }
+
+    to {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes barber-frame-spin {
+    from {
+      background-position: 0 0;
+    }
+
+    to {
+      background-position: 102px 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .barber-frame,
+    .barber-pole__stripes {
+      animation: none;
+    }
+  }
+</style>

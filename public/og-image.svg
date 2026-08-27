@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#071d49"/>
+  <rect x="80" y="76" width="1040" height="478" rx="18" fill="#ffffff"/>
+  <path d="M156 450 420 186" stroke="#e11d2e" stroke-width="34" stroke-linecap="round"/>
+  <path d="M195 188 460 452" stroke="#1f5fa8" stroke-width="28" stroke-linecap="round"/>
+  <text x="540" y="285" fill="#071d49" font-family="Georgia, serif" font-size="76" font-weight="700">Bart's Barber Shop</text>
+  <text x="545" y="365" fill="#15315f" font-family="Arial, sans-serif" font-size="34">Classic cuts. Local craft. Modern care.</text>
+</svg>

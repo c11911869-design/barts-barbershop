@@ -1,0 +1,24 @@
+---
+import Button from './Button.astro';
+import { business } from '../data/business';
+
+const nav = [
+  ['Services', '/services/'],
+  ['Barbers', '/barbers/'],
+  ['Gallery', '/gallery/'],
+  ['FAQ', '/faq/'],
+  ['Contact', '/contact/'],
+];
+---
+
+<header class="border-b border-razor bg-paper/95 backdrop-blur">
+  <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+    <a href="/" class="font-serif text-2xl font-bold text-ink">{business.name}</a>
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm font-semibold text-coal">
+      {nav.map(([label, href]) => <a class="hover:text-clay" href={href}>{label}</a>)}
+    </div>
+    <div class="hidden sm:block">
+      <Button href={business.phoneHref} label={`Call ${business.name}`}>Call Now</Button>
+    </div>
+  </nav>
+</header>

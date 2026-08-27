@@ -1,0 +1,51 @@
+---
+import { business } from '../data/business';
+
+interface Props {
+  services?: string[];
+  pagePath?: string;
+}
+
+const { services = [], pagePath = '/' } = Astro.props;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': ['LocalBusiness', 'BarberShop'],
+  name: business.name,
+  legalName: business.legalName,
+  description: business.description,
+  url: new URL(pagePath, business.siteUrl).toString(),
+  image: [
+    new URL('/og-image.svg', business.siteUrl).toString(),
+    new URL('/images/shop-chair.svg', business.siteUrl).toString(),
+  ],
+  telephone: business.phoneDisplay,
+  priceRange: '$$',
+  foundingDate: business.establishedYear,
+  paymentAccepted: business.paymentAccepted.join(', '),
+  address: {
+    '@type': 'PostalAddress',
+    ...business.address,
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: business.geo.latitude,
+    longitude: business.geo.longitude,
+  },
+  openingHoursSpecification: business.openingHoursSpecification.map((hours) => ({
+    '@type': 'OpeningHoursSpecification',
+    ...hours,
+  })),
+  sameAs: business.sameAs,
+  makesOffer: services.map((service) => ({
+    '@type': 'Offer',
+    itemOffered: {
+      '@type': 'Service',
+      name: service,
+      serviceType: 'Barber service',
+      areaServed: business.address.addressLocality,
+    },
+  })),
+};
+---
+
+<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="680" viewBox="0 0 900 680">
+  <rect width="900" height="680" fill="#fffaf2"/>
+  <rect x="80" y="70" width="740" height="540" rx="18" fill="#26211d"/>
+  <rect x="205" y="165" width="310" height="180" rx="26" fill="#181512"/>
+  <rect x="245" y="345" width="235" height="122" rx="20" fill="#7f4634"/>
+  <rect x="332" y="467" width="62" height="92" fill="#b48645"/>
+  <rect x="248" y="548" width="235" height="26" rx="13" fill="#d8d0c3"/>
+  <text x="98" y="638" fill="#7f4634" font-family="Arial, sans-serif" font-size="22">TODO real photo</text>
+</svg>

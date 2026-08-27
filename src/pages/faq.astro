@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd.astro';
+
+const faqs = (await getCollection('faqs')).sort((a, b) => a.data.order - b.data.order);
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.data.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.data.answer,
+    },
+  })),
+};
+---
+
+<BaseLayout
+  title="FAQ"
+  description="Find answers about walk-ins, payment, parking, and haircut preparation at Bart's Barber Shop, serving customers with more than 60 years in the hair industry."
+  path="/faq/"
+  jsonLd={faqJsonLd}
+>
+  <LocalBusinessJsonLd pagePath="/faq/" />
+  <section class="bg-paper py-16">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <SectionHeading eyebrow="FAQ" title="Common questions" description="Answers about walk-ins, payments, parking, and getting the haircut you want." />
+      <div class="mt-10 divide-y divide-razor rounded-md border border-razor bg-white">
+        {faqs.map((faq) => (
+          <details class="group p-6">
+            <summary class="cursor-pointer list-none font-serif text-2xl font-bold text-ink">{faq.data.question}</summary>
+            <p class="mt-4 leading-7 text-coal">{faq.data.answer}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

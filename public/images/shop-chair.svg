@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <rect width="1200" height="900" fill="#071d49"/>
+  <rect x="92" y="92" width="1016" height="716" rx="20" fill="#ffffff"/>
+  <rect x="270" y="214" width="450" height="240" rx="32" fill="#071d49"/>
+  <rect x="325" y="454" width="340" height="170" rx="26" fill="#e11d2e"/>
+  <rect x="444" y="624" width="100" height="120" fill="#1f5fa8"/>
+  <rect x="340" y="738" width="310" height="34" rx="17" fill="#071d49"/>
+  <circle cx="860" cy="302" r="82" fill="#c8d7ea"/>
+  <path d="M790 425h140" stroke="#e11d2e" stroke-width="24" stroke-linecap="round"/>
+  <text x="158" y="746" fill="#071d49" font-family="Arial, sans-serif" font-size="28">TODO: Replace with real shop photography</text>
+</svg>

@@ -1,0 +1,57 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd.astro';
+
+const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
+const renderedTeam = await Promise.all(
+  team.map(async (member) => ({
+    ...member,
+    Content: (await render(member)).Content,
+  })),
+);
+---
+
+<BaseLayout
+  title="Barbers and Team"
+  description="Meet Bart Jr., Laura, Audra, and the walk-in barber team at Bart's Barber Shop in Laurel, Maryland."
+  path="/barbers/"
+>
+  <LocalBusinessJsonLd pagePath="/barbers/" />
+  <section class="bg-paper py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <SectionHeading eyebrow="Barbers" title="Meet the team" description="Bart's brings more than 60 years in the hair industry to every walk-in visit, with Bart Jr., Laura, Audra, and the shop team serving clients." />
+      <div class="mt-10 space-y-6">
+        {renderedTeam.map((member) => {
+          const Content = member.Content;
+          return (
+            <article class="overflow-hidden rounded-md border border-razor bg-white md:grid md:grid-cols-[280px_1fr] lg:grid-cols-[340px_1fr]">
+              <div class="bg-cream">
+                <Image
+                  src={member.data.image}
+                  alt={member.data.imageAlt}
+                  class="aspect-[4/3] h-full w-full object-cover md:aspect-auto"
+                  widths={[360, 540, 720]}
+                  sizes="(min-width: 1024px) 340px, (min-width: 768px) 280px, 100vw"
+                />
+              </div>
+              <div class="p-6 sm:p-8">
+                <p class="text-sm font-bold uppercase tracking-[0.16em] text-clay">{member.data.role}</p>
+                <h2 class="mt-2 font-serif text-3xl font-bold">{member.data.name}</h2>
+                <p class="mt-3 max-w-2xl leading-7 text-coal">{member.data.bio}</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                  {member.data.specialties.map((specialty) => (
+                    <span class="rounded-md bg-cream px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-ink">{specialty}</span>
+                  ))}
+                </div>
+                <div class="prose-content mt-4 max-w-2xl text-sm"><Content /></div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

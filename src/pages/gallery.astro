@@ -1,0 +1,191 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd.astro';
+
+const gallery = (await getCollection('gallery')).sort((a, b) => a.data.order - b.data.order);
+const groups = [
+  {
+    title: 'Historic Photos',
+    description: 'A glimpse into the family-owned shop’s long history in Laurel.',
+    categories: ['History'],
+  },
+  {
+    title: 'The Shop',
+    description: 'A look at the storefront, barber chairs, waiting area, and classic shop details at Bart’s in Laurel Shopping Center.',
+    categories: ['Shop Exterior', 'Shop Interior', 'Barber Shop'],
+  },
+  {
+    title: 'Hair House',
+    description: 'Photos from the Hair House, including styling stations and service areas.',
+    categories: ['Hair House'],
+  },
+  {
+    title: 'Team',
+    description: 'Faces from the barber shop and Hair House team.',
+    categories: ['Team'],
+  },
+];
+
+const historicResearchLinks = [
+  {
+    title: 'Laurel Shopping Center history video',
+    source: 'Lost Laurel / Laurel TV',
+    href: 'https://lostlaurel.com/2014/12/02/lost-laurel-tv-laurel-shopping-center-part-1/',
+    description:
+      "Covers the 1956 grand opening and notes Bart's Barber Shop and Giant Food as original businesses still open today.",
+  },
+  {
+    title: 'Above Laurel Shopping Center, 1971',
+    source: 'Lost Laurel',
+    href: 'https://lostlaurel.com/2012/08/19/above-laurel-shopping-center-1971/',
+    description:
+      'Aerial history of Laurel Shopping Center, including the Giant Food sign and early 1970s shopping center layout.',
+  },
+  {
+    title: 'Woolworth at Laurel Shopping Center',
+    source: 'Voices of Laurel',
+    href: 'https://www.laurelhistory.com/_files/ugd/380430_050b7737e94a42dbb47f17c376941822.pdf',
+    description:
+      'Includes 1956 grand-opening-era Laurel Shopping Center photos and context from former Woolworth employees.',
+  },
+];
+---
+
+<BaseLayout
+  title="Gallery"
+  description="Browse photos of Bart's Barber Shop, Hair House, team, and historic shop moments in Laurel, MD."
+  path="/gallery/"
+>
+  <LocalBusinessJsonLd pagePath="/gallery/" />
+  <section class="bg-paper py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <SectionHeading eyebrow="Gallery" title="Inside Bart's Barber Shop" description="See the Laurel shop, Hair House, team, and a few moments from the business's long-running history." />
+      <div class="mt-8 max-w-4xl rounded-md border border-razor bg-white p-6">
+        <h2 class="font-serif text-3xl font-bold text-ink">A Laurel barber shop tradition</h2>
+        <p class="mt-3 leading-8 text-coal">
+          Bart's Barber Shop was established by Bart Sr. in 1956 and is now owned and operated by his son, Bart Jr. With more than 60 years in the hair industry, Bart's has served generations of customers with walk-in haircuts, shaves, and full-service barbering. Alongside Giant Food, it is part of Laurel Shopping Center's original retail story.
+        </p>
+      </div>
+      <div class="mt-12 space-y-14">
+        {groups.map((group) => {
+          const items = gallery.filter((item) => group.categories.includes(item.data.category));
+          if (items.length === 0) return null;
+          const firstItem = items[0];
+          const groupId = `gallery-${group.title.toLowerCase().replaceAll(' ', '-')}`;
+
+          return (
+            <section aria-labelledby={groupId}>
+              <div class="border-b border-razor pb-4">
+                <h2 id={groupId} class="font-serif text-4xl font-bold text-ink">
+                  {group.title}
+                </h2>
+                <p class="mt-2 max-w-2xl leading-7 text-coal">{group.description}</p>
+              </div>
+              <div
+                class="relative mt-6 overflow-hidden rounded-md border border-razor bg-white"
+                data-gallery
+                data-gallery-label={group.title}
+              >
+                <div class="relative">
+                  {items.map((item, index) => (
+                    <figure
+                      class={index === 0 ? 'gallery-item block' : 'gallery-item hidden'}
+                      data-title={item.data.title}
+                      data-description={item.body?.trim() || item.data.alt}
+                      data-category={item.data.category}
+                      data-credit={item.data.credit ?? ''}
+                      data-source-url={item.data.sourceUrl ?? ''}
+                      data-license={item.data.license ?? ''}
+                    >
+                      <a href={item.data.image.src} target="_blank" rel="noreferrer" aria-label={`Open larger photo: ${item.data.title}`}>
+                        <Image
+                          src={item.data.image}
+                          alt={item.data.alt}
+                          class={`aspect-[16/10] w-full object-cover ${item.data.category === 'History' ? 'grayscale' : ''}`}
+                          widths={[720, 960, 1200, 1440]}
+                          sizes="(min-width: 1024px) 72rem, 100vw"
+                        />
+                      </a>
+                    </figure>
+                  ))}
+                  <button
+                    type="button"
+                    class="absolute left-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-ink/80 text-3xl leading-none text-paper transition hover:bg-ink"
+                    data-gallery-prev
+                    aria-label={`Previous ${group.title} photo`}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    class="absolute right-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-ink/80 text-3xl leading-none text-paper transition hover:bg-ink"
+                    data-gallery-next
+                    aria-label={`Next ${group.title} photo`}
+                  >
+                    ›
+                  </button>
+                </div>
+                <div class="border-t border-razor bg-cream px-5 py-4">
+                  <h3 class="font-serif text-2xl font-bold text-ink" data-gallery-caption-title>{firstItem.data.title}</h3>
+                  <p class="mt-1 leading-7 text-coal" data-gallery-caption-description>{firstItem.body?.trim() || firstItem.data.alt}</p>
+                </div>
+                <p class="sr-only" data-gallery-status aria-live="polite">
+                  Showing photo 1 of {items.length} in {group.title}.
+                </p>
+              </div>
+              {group.title === 'Historic Photos' && (
+                <div class="mt-6 grid gap-4 md:grid-cols-3">
+                  {historicResearchLinks.map((link) => (
+                    <a class="rounded-md border border-razor bg-cream p-5 transition hover:border-clay hover:bg-white" href={link.href}>
+                      <p class="text-xs font-bold uppercase tracking-[0.16em] text-clay">{link.source}</p>
+                      <h3 class="mt-2 font-serif text-2xl font-bold text-ink">{link.title}</h3>
+                      <p class="mt-3 text-sm leading-6 text-coal">{link.description}</p>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+  <script is:inline>
+    for (const gallery of document.querySelectorAll('[data-gallery]')) {
+      const items = Array.from(gallery.querySelectorAll('.gallery-item'));
+      const previous = gallery.querySelector('[data-gallery-prev]');
+      const next = gallery.querySelector('[data-gallery-next]');
+      const status = gallery.querySelector('[data-gallery-status]');
+      const captionTitle = gallery.querySelector('[data-gallery-caption-title]');
+      const captionDescription = gallery.querySelector('[data-gallery-caption-description]');
+      let activeIndex = 0;
+
+      const show = (nextIndex) => {
+        activeIndex = (nextIndex + items.length) % items.length;
+        items.forEach((item, index) => {
+          item.classList.toggle('hidden', index !== activeIndex);
+          item.classList.toggle('block', index === activeIndex);
+        });
+
+        if (status) {
+          const label = gallery.getAttribute('data-gallery-label') || 'gallery';
+          status.textContent = `Showing photo ${activeIndex + 1} of ${items.length} in ${label}.`;
+        }
+
+        const activeItem = items[activeIndex];
+        if (captionTitle) {
+          captionTitle.textContent = activeItem.getAttribute('data-title') || '';
+        }
+        if (captionDescription) {
+          captionDescription.textContent = activeItem.getAttribute('data-description') || '';
+        }
+      };
+
+      previous?.addEventListener('click', () => show(activeIndex - 1));
+      next?.addEventListener('click', () => show(activeIndex + 1));
+    }
+  </script>
+</BaseLayout>

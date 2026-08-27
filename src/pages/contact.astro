@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import LocalBusinessJsonLd from '../components/LocalBusinessJsonLd.astro';
+import { business } from '../data/business';
+---
+
+<BaseLayout
+  title="Contact"
+  description="Call Bart's Barber Shop at (301) 317-9111 or get directions to a Laurel barber shop with more than 60 years in the hair industry."
+  path="/contact/"
+>
+  <LocalBusinessJsonLd pagePath="/contact/" />
+  <section class="bg-paper py-16">
+    <div class="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+      <div>
+        <SectionHeading eyebrow="Contact" title="Call or visit Bart's Barber Shop" description="Bart's is located in Laurel Shopping Center at 356 Domer Ave in Laurel, Maryland. Walk-ins are welcome." />
+        <div class="mt-8 flex flex-wrap gap-3">
+          <Button href={business.phoneHref}>Call Now</Button>
+          <Button href={business.directionsUrl} variant="ghost">Get Directions</Button>
+        </div>
+      </div>
+      <div class="rounded-md border border-razor bg-white p-6">
+        <h2 class="font-serif text-3xl font-bold">Shop details</h2>
+        <dl class="mt-6 grid gap-5">
+          <div>
+            <dt class="text-sm font-bold uppercase tracking-[0.14em] text-clay">Phone</dt>
+            <dd class="mt-1"><a class="font-semibold hover:text-clay" href={business.phoneHref}>{business.phoneDisplay}</a></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-bold uppercase tracking-[0.14em] text-clay">Address</dt>
+            <dd class="mt-1">
+              <address class="not-italic leading-7">
+                {business.locationName}<br />
+                {business.address.streetAddress}<br />
+                {business.address.addressLocality}, {business.address.addressRegion} {business.address.postalCode}
+              </address>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-bold uppercase tracking-[0.14em] text-clay">Payment</dt>
+            <dd class="mt-1">{business.paymentAccepted.join(', ')}</dd>
+          </div>
+          <div>
+            <dt class="text-sm font-bold uppercase tracking-[0.14em] text-clay">Hours</dt>
+            <dd class="mt-2 grid gap-2 text-sm">
+              {business.displayHours.map((hours) => (
+                <span class="flex justify-between gap-4 border-b border-razor pb-2">
+                  <span>{hours.dayOfWeek}</span>
+                  <span>{hours.hours}</span>
+                </span>
+              ))}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+  <section class="bg-cream py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="overflow-hidden rounded-md border border-razor bg-paper">
+        <iframe
+          title={business.mapEmbedTitle}
+          src={business.mapEmbedUrl}
+          class="h-[360px] w-full border-0 sm:h-[440px]"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

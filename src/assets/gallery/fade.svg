@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="680" viewBox="0 0 900 680">
+  <rect width="900" height="680" fill="#f8f1e6"/>
+  <rect x="180" y="95" width="540" height="490" rx="245" fill="#26211d"/>
+  <path d="M300 395c40 80 260 80 300 0V250c-70-70-230-70-300 0z" fill="#b48645"/>
+  <path d="M305 260c56-105 250-105 290 0-82-36-196-36-290 0z" fill="#181512"/>
+  <path d="M310 395c44 52 246 52 286 0" stroke="#fffaf2" stroke-width="24" stroke-linecap="round"/>
+  <text x="68" y="638" fill="#7f4634" font-family="Arial, sans-serif" font-size="22">TODO real haircut photo</text>
+</svg>
