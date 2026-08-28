@@ -17,9 +17,9 @@ interface Env {
   TURNSTILE_SECRET_KEY: string;
   FEEDBACK_GITHUB_TOKEN: string;
   FEEDBACK_GITHUB_REPO: string; // "owner/name"
-  RESEND_API_KEY: string;
-  FEEDBACK_TO_EMAIL: string;
-  FEEDBACK_FROM_EMAIL: string;
+  RESEND_API_KEY?: string; // optional; when unset, no notification email is sent
+  FEEDBACK_TO_EMAIL?: string;
+  FEEDBACK_FROM_EMAIL?: string;
   FEEDBACK_PASSCODE?: string; // optional shared secret for the client
 }
 
@@ -135,8 +135,15 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
 
   const created = (await issue.json()) as { html_url: string; number: number };
 
-  // Email is a convenience notification. Losing it must not lose the feedback,
-  // which is already durably recorded as an issue above.
+  // Email is an optional convenience notification: GitHub already emails the
+  // repo owner about new issues. When RESEND_API_KEY is unset the step is
+  // skipped entirely rather than firing a request that is known to fail.
+  // Losing the email must never lose the feedback, which is already durably
+  // recorded as an issue above.
+  if (!env.RESEND_API_KEY) {
+    return json(200, { ok: true, issue: created.number });
+  }
+
   try {
     await fetch('https://api.resend.com/emails', {
       method: 'POST',

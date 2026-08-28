@@ -131,8 +131,10 @@ sitemap because it is a review tool, not public marketing content.
 2. `worker/index.ts` verifies the Turnstile token, checks a honeypot field,
    and validates lengths.
 3. A GitHub issue is filed with the `client-feedback` label.
-4. A notification email is sent through Resend. Email failure is logged but does
-   not fail the request, because the issue is already the durable record.
+4. Optionally, a notification email is sent through Resend. This is skipped
+   entirely when `RESEND_API_KEY` is unset, which is the current setup: GitHub
+   already emails the repository owner about new issues. Email failure is
+   logged but never fails the request, because the issue is the durable record.
 
 ### Why approval is manual
 
@@ -151,9 +153,9 @@ Set these under Settings -> Variables and Secrets. Mark everything except
 | `TURNSTILE_SECRET_KEY` | Server-side Turnstile verification |
 | `FEEDBACK_GITHUB_TOKEN` | Fine-grained PAT, Issues read/write, this repo only |
 | `FEEDBACK_GITHUB_REPO` | `c11911869-design/barts-barbershop` |
-| `RESEND_API_KEY` | Resend API key |
-| `FEEDBACK_TO_EMAIL` | Where notifications are delivered |
-| `FEEDBACK_FROM_EMAIL` | Verified Resend sender |
+| `RESEND_API_KEY` | Optional. Unset means no notification email is sent. |
+| `FEEDBACK_TO_EMAIL` | Only needed when `RESEND_API_KEY` is set |
+| `FEEDBACK_FROM_EMAIL` | Only needed when `RESEND_API_KEY` is set |
 | `FEEDBACK_PASSCODE` | Optional shared access code |
 
 ### GitHub Actions secrets
