@@ -48,25 +48,38 @@ The canonical remote is:
 
 Node version is pinned to 22 in `.nvmrc` so local and CI builds match.
 
-## Cloudflare Pages Deployment
+## Cloudflare Deployment
 
-Connect the repository to Cloudflare Pages with these settings:
+The site is deployed as a **Cloudflare Worker with static assets**, not as a
+Pages project. The Cloudflare dashboard's current "Create application" flow
+produces a Worker, and Workers do not read the Pages `functions/` convention.
 
-- Framework preset: Astro
+Configuration lives in `wrangler.jsonc`:
+
+- `assets.directory` points at the Astro `dist/` output
+- `main` points at `worker/index.ts`
+
+Requests matching a built file are served straight from the asset store without
+invoking the Worker. Everything else falls through to `worker/index.ts`, which
+is how `/api/feedback` is reached.
+
+### Build settings
+
+Set in the Cloudflare dashboard under Settings -> Build:
+
 - Build command: `npm run build`
-- Output directory: `dist`
-- Production branch: `main`
-- Node version: read from `.nvmrc` (22)
+- Deploy command: `npx wrangler deploy`
+- Root directory: `/`
 
-No server adapter is required because the project uses static output.
-Pull requests automatically receive their own preview deployment URL.
+The deploy command must not be left to autodetect. Without `wrangler.jsonc`
+present, `wrangler deploy` tries to convert the project to the Astro SSR
+adapter mid-build and fails.
 
 ### Response headers
 
-`public/_headers` is copied verbatim into `dist/` at build time and read by
-Cloudflare Pages. It currently sends `X-Robots-Tag: noindex, nofollow` so the
-pre-launch review deployment cannot compete with the live
-`bartsbarbershop.org` site in search results.
+`public/_headers` is copied verbatim into `dist/` at build time. It currently
+sends `X-Robots-Tag: noindex, nofollow` so the pre-launch review deployment
+cannot compete with the live `bartsbarbershop.org` site in search results.
 
 Remove that one line at launch. Leave the remaining security headers in place.
 
@@ -115,8 +128,8 @@ sitemap because it is a review tool, not public marketing content.
 ### Request flow
 
 1. The visitor completes the form and a Cloudflare Turnstile challenge.
-2. `functions/api/feedback.ts` verifies the Turnstile token, checks a honeypot
-   field, and validates lengths.
+2. `worker/index.ts` verifies the Turnstile token, checks a honeypot field,
+   and validates lengths.
 3. A GitHub issue is filed with the `client-feedback` label.
 4. A notification email is sent through Resend. Email failure is logged but does
    not fail the request, because the issue is already the durable record.
@@ -127,9 +140,9 @@ The form does not apply the `approved` label, and the agent workflow only fires
 on that label. Turnstile stops bots, not a determined person who finds the URL,
 so a human decides what becomes paid agent work.
 
-### Cloudflare Pages environment variables
+### Worker environment variables
 
-Set these under Settings -> Environment variables. Mark everything except
+Set these under Settings -> Variables and Secrets. Mark everything except
 `PUBLIC_TURNSTILE_SITE_KEY` as encrypted:
 
 | Variable | Purpose |

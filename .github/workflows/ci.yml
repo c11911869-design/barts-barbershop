@@ -34,6 +34,11 @@ jobs:
           test -f dist/_headers || { echo "::error::dist/_headers is missing"; exit 1; }
           grep -q "X-Robots-Tag" dist/_headers || { echo "::error::noindex directive missing"; exit 1; }
 
+      # Catches wrangler config regressions without deploying. A broken config
+      # is otherwise only discovered by a failed Cloudflare build.
+      - name: Validate the Worker config and bundle
+        run: npx wrangler deploy --dry-run
+
       - name: Verify every expected page built
         run: |
           for page in index services barbers gallery faq contact feedback; do

@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "barts-barbershop",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": true,
+
+  // The Astro build output is served as static assets. Requests that match a
+  // file are served directly without invoking the Worker; everything else
+  // falls through to worker/index.ts, which is how /api/feedback is reached.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "none"
+  }
+}

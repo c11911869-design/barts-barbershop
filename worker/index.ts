@@ -1,15 +1,19 @@
 /**
- * Feedback intake for the client review site.
+ * Worker entry point for the Bart's Barber Shop site.
  *
- * Flow: Turnstile verification -> validation -> GitHub issue -> notification email.
+ * Static pages are served from the ASSETS binding (the Astro `dist/` output).
+ * Requests that do not match a static file arrive here, which is how the
+ * feedback endpoint is reached.
  *
- * The issue is filed with the `client-feedback` label only. It deliberately does
- * NOT get the `approved` label, because that label is what releases the build
- * agent to act. Approval stays a manual decision by the maintainer so that a
- * public form can never queue automated work on its own.
+ * Feedback flow: Turnstile verification -> validation -> GitHub issue ->
+ * notification email. The issue is filed with the `client-feedback` label only.
+ * It deliberately does NOT get the `approved` label, because that label is what
+ * releases the build agent to act. Approval stays a manual decision by the
+ * maintainer so that a public form can never queue automated work on its own.
  */
 
 interface Env {
+  ASSETS: Fetcher;
   TURNSTILE_SECRET_KEY: string;
   FEEDBACK_GITHUB_TOKEN: string;
   FEEDBACK_GITHUB_REPO: string; // "owner/name"
@@ -47,7 +51,7 @@ async function verifyTurnstile(token: string, secret: string, ip: string | null)
   return data.success === true;
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+async function handleFeedback(request: Request, env: Env): Promise<Response> {
   let form: FormData;
   try {
     form = await request.formData();
@@ -160,9 +164,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   return json(200, { ok: true, issue: created.number });
-};
+}
 
-// Pages returns 405 on its own for unhandled methods; this makes a stray GET
-// (someone opening /api/feedback in a browser) return something legible.
-export const onRequestGet: PagesFunction<Env> = async () =>
-  json(405, { error: 'This endpoint only accepts form submissions.' });
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (url.pathname === '/api/feedback') {
+      return request.method === 'POST'
+        ? handleFeedback(request, env)
+        : json(405, { error: 'This endpoint only accepts form submissions.' });
+    }
+
+    // Anything else is a static asset, or a genuine 404 from the asset server.
+    return env.ASSETS.fetch(request);
+  },
+} satisfies ExportedHandler<Env>;

@@ -7,8 +7,8 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check && tsc -p functions",
-    "check:functions": "tsc -p functions"
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check && tsc -p worker",
+    "check:worker": "tsc -p worker"
   },
   "dependencies": {
     "@astrojs/check": "latest",
@@ -20,6 +20,7 @@
     "typescript": "latest"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260827.1"
+    "@cloudflare/workers-types": "^5.20260827.1",
+    "wrangler": "^4.127.0"
   }
 }
