@@ -2,10 +2,12 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 
-// Cloudflare's documented "always passes" test key keeps the form usable in
-// local development and before the real Turnstile keys are issued.
-const TEST_SITE_KEY = '1x00000000000000000000AA';
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? TEST_SITE_KEY;
+// The Turnstile site key is public by design: it is served in this page's HTML
+// and is useless without the secret key, which lives only in the Worker env.
+// Override with PUBLIC_TURNSTILE_SITE_KEY to point at a different widget, or at
+// Cloudflare's always-passes test key 1x00000000000000000000AA for local work.
+const SITE_KEY = '0x4AAAAAAEebaDVhwXaehcXo';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? SITE_KEY;
 
 const areas = ['Home', 'Services', 'Barbers', 'Gallery', 'FAQ', 'Contact', 'Something else'];
 const field =
