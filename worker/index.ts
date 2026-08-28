@@ -136,10 +136,15 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
     'Add the `approved` label to release the build agent to work on this.',
   ].join('\n');
 
-  const issue = await fetch(`https://api.github.com/repos/${env.FEEDBACK_GITHUB_REPO}/issues`, {
+  // Same whitespace hazard as the Turnstile secret: a stray newline pasted into
+  // the dashboard makes the Authorization header invalid.
+  const repo = (env.FEEDBACK_GITHUB_REPO ?? '').trim();
+  const githubToken = (env.FEEDBACK_GITHUB_TOKEN ?? '').trim();
+
+  const issue = await fetch(`https://api.github.com/repos/${repo}/issues`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.FEEDBACK_GITHUB_TOKEN}`,
+      Authorization: `Bearer ${githubToken}`,
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
       'User-Agent': 'barts-barbershop-feedback',
@@ -148,8 +153,14 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
   });
 
   if (!issue.ok) {
-    console.error('GitHub issue creation failed', issue.status, await issue.text());
-    return json(502, { error: 'Could not record the feedback. Please try again shortly.' });
+    const detail = await issue.text();
+    console.error('GitHub issue creation failed', issue.status, detail);
+    // 401 means the token is wrong or expired; 403 means it lacks Issues write;
+    // 404 means the token cannot see this repository at all.
+    return json(502, {
+      error: 'Could not record the feedback. Please try again shortly.',
+      github: issue.status,
+    });
   }
 
   const created = (await issue.json()) as { html_url: string; number: number };
