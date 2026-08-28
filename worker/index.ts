@@ -36,9 +36,20 @@ function fence(text: string): string {
   return text.replace(/```/g, "'''");
 }
 
-async function verifyTurnstile(token: string, secret: string, ip: string | null): Promise<boolean> {
+interface TurnstileResult {
+  ok: boolean;
+  codes: string[];
+}
+
+async function verifyTurnstile(
+  token: string,
+  secret: string,
+  ip: string | null,
+): Promise<TurnstileResult> {
   const form = new FormData();
-  form.append('secret', secret);
+  // Trailing whitespace from a copy-paste into the dashboard is a common cause
+  // of invalid-input-secret, and it is invisible in the UI.
+  form.append('secret', (secret ?? '').trim());
   form.append('response', token);
   if (ip) form.append('remoteip', ip);
 
@@ -46,9 +57,10 @@ async function verifyTurnstile(token: string, secret: string, ip: string | null)
     method: 'POST',
     body: form,
   });
-  if (!res.ok) return false;
-  const data = (await res.json()) as { success?: boolean };
-  return data.success === true;
+  if (!res.ok) return { ok: false, codes: [`siteverify-http-${res.status}`] };
+
+  const data = (await res.json()) as { success?: boolean; 'error-codes'?: string[] };
+  return { ok: data.success === true, codes: data['error-codes'] ?? [] };
 }
 
 async function handleFeedback(request: Request, env: Env): Promise<Response> {
@@ -72,8 +84,15 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
   if (!token) return json(400, { error: 'Please complete the human verification check.' });
 
   const ip = request.headers.get('CF-Connecting-IP');
-  if (!(await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, ip))) {
-    return json(403, { error: 'Human verification failed. Please reload and try again.' });
+  const verdict = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, ip);
+  if (!verdict.ok) {
+    // Codes distinguish a misconfigured secret from a genuinely failed challenge.
+    // invalid-input-secret means the TURNSTILE_SECRET_KEY variable is wrong.
+    console.error('Turnstile verification failed', verdict.codes.join(','));
+    return json(403, {
+      error: 'Human verification failed. Please reload and try again.',
+      codes: verdict.codes,
+    });
   }
 
   const name = field('name');

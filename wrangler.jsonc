@@ -8,6 +8,9 @@
   // The Astro build output is served as static assets. Requests that match a
   // file are served directly without invoking the Worker; everything else
   // falls through to worker/index.ts, which is how /api/feedback is reached.
+  // Surfaces console.error output in the dashboard under Observability.
+  "observability": { "enabled": true },
+
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
